@@ -1,0 +1,64 @@
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "ui",
+  "main": "bin/www",
+  "scripts": {
+    "start": "node bin/www",
+    "test": "node ./spec/index",
+    "commit": "commit-wizard",
+    "lint": "./node_modules/.bin/eslint app.js route.js wetty.js mongo method bin routes spec  --quiet",
+    "lint-fix": "./node_modules/.bin/eslint app.js route.js wetty.js mongo method bin routes spec  --quiet --fix",
+    "js-beautify": "node --harmony --use_strict ./bin/beatufyjs.js app.js route.js wetty.js mongo method bin routes spec "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/longwdl/nradio_it_cloud_ui.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/longwdl/nradio_it_cloud_ui/issues"
+  },
+  "homepage": "https://github.com/longwdl/nradio_it_cloud_ui#readme",
+  "dependencies": {
+    "Validator": "^1.0.5",
+    "body-parser": "^1.18.2",
+    "cookie-parser": "^1.4.3",
+    "dotenv": "^4.0.0",
+    "express": "^4.16.2",
+    "http-proxy-middleware": "^0.17.4",
+    "jsonwebtoken": "^8.1.0",
+    "mongoose": "^5.0.15",
+    "mqtt": "^2.15.0",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^8.2.6",
+    "chai": "^4.1.2",
+    "chai-subset": "^1.6.0",
+    "debug": "^3.1.0",
+    "eslint": "^5.4.0",
+    "faker": "^4.1.0",
+    "js-beautify": "^1.7.5",
+    "mocha": "^4.0.1",
+    "pre-git": "^3.17.1",
+    "superagent": "^3.8.2"
+  },
+  "release": {
+    "analyzeCommits": "simple-commit-message"
+  },
+  "config": {
+    "pre-git": {
+      "commit-msg": "",
+      "pre-commit": [
+        "npm run lint-fix",
+        "npm run js-beautify"
+      ],
+      "pre-push": [],
+      "post-commit": [],
+      "post-checkout": [],
+      "post-merge": []
+    }
+  }
+}

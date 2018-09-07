@@ -1,0 +1,18 @@
+version: "3"
+services:
+  ui:
+    build: .
+    privileged: false
+    restart: always
+    depends_on:
+      - mongoDB
+    environment:
+      - VIRTUAL_HOST=example.com
+      - MQTT_HOST=mqtt://localhost:1883
+      - MQTT_PASSWORD=password
+      - MQTT_USERNAME=user
+      - MONGO_URI=mongodb://localhost:27017
+  mongoDB:
+    image: mongo:3.5
+    privileged: false
+    restart: always
