@@ -42,7 +42,7 @@
                 <div class="block">
                     <el-date-picker v-model="addstaTimeValue" size="mini" type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" align="center" :picker-options="pickerOptions2" unlink-panels>
                     </el-date-picker>
-                    <el-button icon="el-icon-search" size="mini" type="primary" :loading= addstaLoading @click="getLineData('addsta')">查询</el-button>
+                    <el-button icon="el-icon-search" size="mini" type="primary" :loading= addstaLoading @click="getStaGrowtLineData('addsta')">查询</el-button>
                 </div>
                 <line-chart :chart-data="addstaDatacollection" :height="300" v-if="addstaLineLoaded"></line-chart>
             </div>
@@ -175,7 +175,8 @@ export default {
         await this.getTime("ap");
         await this.getTime("addsta");
 
-        await this.getData();
+        await this.getNumStartData();
+        await this.getStaGrowthData();
 
         await this.dataShow("sta");
         await this.dataShow("ac");
@@ -188,11 +189,11 @@ export default {
             const start = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
             this[`${type}TimeValue`] = [start, end];
         },
-        async getData() {
+        async getNumStartData() {
             try {
-                let res = await api.get("ui/proportion", {
+                let res = await api.get("ui/numstat", {
                     params: {
-                        timeValue: this.staTimeValue
+                        timeValue: this.addstaTimeValue
                     }
                 });
 
@@ -209,12 +210,47 @@ export default {
                 console.error(error);
             }
         },
+        async getStaGrowthData() {
+            try {
+                let res = await api.get("ui/chartdata", {
+                    params: {
+                        timeValue: this.staTimeValue,
+                        type:"staGrowth"
+                    }
+                });
+
+                let result = res.data.result.reverse();
+                this.addstaLineStoreData = result;
+
+            } catch (error) {
+                console.error(error);
+            }
+        },
         async getLineData(type) {
             try {
                 this[`${type}Loading`] = true;
-                let res = await api.get("ui/proportion", {
+                let res = await api.get("ui/numstat", {
                     params: {
                         timeValue: this[`${type}TimeValue`]
+                    }
+                });
+                let result = res.data.result;
+                this[`${type}LineStoreData`] = result;
+                this[`${type}LineStoreData`].reverse();
+                await this.dataShow(type);
+                this[`${type}Loading`] = false;
+            } catch (error) {
+                console.log(error);
+                this[`${type}Loading`] = false;
+            }
+        },
+        async getStaGrowtLineData(type) {
+            try {
+                this[`${type}Loading`] = true;
+                let res = await api.get("ui/chartdata", {
+                    params: {
+                        timeValue: this[`${type}TimeValue`],
+                        type:"staGrowth"
                     }
                 });
                 let result = res.data.result;
@@ -248,11 +284,15 @@ export default {
         },
 
         async datafn(type, divisor, datefn) {
+            let valueType = type; 
+            if(type==="addsta"){
+                valueType = "num";
+            }
             this[`${type}LineData`] = [];
             this[`${type}LineLabels`] = [];
             this[`${type}LineStoreData`].forEach((val, key) => {
                 if (key === 0 || Number.isInteger((key + 1) / divisor)) {
-                    this[`${type}LineData`].push(val[type]);
+                    this[`${type}LineData`].push(val[valueType]);
                     this[`${type}LineLabels`].push(datefn(val.time));
                 }
             });

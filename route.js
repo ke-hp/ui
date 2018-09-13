@@ -8,7 +8,7 @@ const connectedHistoryRoute = require(`${__base }routes/connectedHistory`);
 const execRoute = require(`${__base }routes/exec`);
 const sysinfoRoute = require(`${__base }routes/sysinfo`);
 const macGroupRoute = require(`${__base }routes/macGroup`);
-
+const chartDataRoute = require(`${__base }routes/chartData`);
 function route(app) {
 	// user
 	app.post('/login', userRoute.login);
@@ -38,7 +38,8 @@ function route(app) {
 	app.get('/ui/execs', execRoute.index);
 	app.get('/ui/sysinfo', sysinfoRoute.index);
 	// chart
-	app.get('/ui/proportion', numStatRoute.index);
+	app.get('/ui/numstat', numStatRoute.index);
+	app.get('/ui/chartdata', chartDataRoute.index);
 	// macGroups
 	app.get('/ui/macGroups', macGroupRoute.index);
 	app.post('/ui/macGroups', macGroupRoute.create);

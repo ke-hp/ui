@@ -41,7 +41,7 @@
                 <el-table-column prop="time" label="在线 / 离线时长" sortable>
                 </el-table-column>
                 <el-table-column label="操作">
-                    <template slot-scope="scope" v-if= scope.row.connected>
+                    <template slot-scope="scope">
                         <el-button @click="commandClick(scope.row)" type="text" size="small">
                             <icon name="exchange"></icon>
                         </el-button>
