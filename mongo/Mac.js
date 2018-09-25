@@ -4,6 +4,7 @@ module.exports = (mongoose) => {
 			{
 				type: mongoose.Schema.Types.ObjectId,
 				ref: 'user',
+				index: true,
 			},
 		mac: {
 			type: String,
@@ -21,6 +22,6 @@ module.exports = (mongoose) => {
 			type: Date,
 			default: Date.now(),
 		},
-	}));
+	}).index({mac: 1, connected:1}));
 	return Model;
 }
