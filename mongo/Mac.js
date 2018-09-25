@@ -22,6 +22,8 @@ module.exports = (mongoose) => {
 			type: Date,
 			default: Date.now(),
 		},
-	}).index({mac: 1, connected:1}));
+	}).index({
+		mac: 1, connected: 1,
+	}));
 	return Model;
 }
