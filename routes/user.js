@@ -42,6 +42,7 @@ async function login(req, res, next) {
 
 		await mongo.session.create({
 			account: input.account,
+			privileges: user.privileges,
 			jti: jti,
 			ip: req.ip,
 			time: Date.now(),
@@ -50,6 +51,7 @@ async function login(req, res, next) {
 		return res.json({
 			token: token,
 			id: user.id,
+			privileges: user.privileges,
 			account: user.account,
 		});
 	} catch (err) {
@@ -79,6 +81,14 @@ async function create(req, res, next) {
 	};
 
 	const input = filter(req.body, rules);
+	const userIsNull = await mongo.user.findOne({
+		account: input.account,
+	});
+	if (userIsNull) {
+		const err = "user already exist";
+		return next(err);
+	}
+
 	const v = validator.make(input, rules);
 	if (v.fails()) {
 		return next(v.getErrors());
@@ -139,8 +149,24 @@ async function update(req, res, next) {
 	debug('Enter update method!');
 
 	const rules = {
-		password: 'string|required|min:6',
 	};
+	const update = {
+	};
+	if ("name" in req.body) {
+		rules.name = 'string|required';
+		update.name = req.body.name;
+	}
+	if ("password" in req.body) {
+		rules.password = 'string|required|min:6';
+		update.password = cryptic.hmac(input.password, input.password)
+	}
+	if ("privileges" in req.body) {
+		rules.privileges = 'string|required';
+		update.privileges = req.body.privileges;
+	}
+	if (Object.keys(update).length === 0 ) {
+		return next("update value is null");
+	}
 
 	const input = filter(req.body, rules);
 	const v = validator.make(input, rules);
@@ -149,13 +175,10 @@ async function update(req, res, next) {
 	}
 
 	try {
-		const password = cryptic.hmac(input.password, input.password);
-
-		const result = await mongo.user.findByIdAndUpdate(req.params.id, {
-			password: password,
-		}, {
+		const result = await mongo.user.findByIdAndUpdate(req.params.id, update, {
 			new: true,
 		});
+		
 
 		return res.json({
 			result,
@@ -194,6 +217,60 @@ async function show(req, res, next) {
 
 }
 
+async function userList(req, res, next) {
+	debug('Enter userList method!');
+
+	const rules = {
+		name: 'string',
+		skip: 'integer',
+	};
+	const input = filter(req.query, rules);
+	const v = validator.make(input, rules);
+	if (v.fails()) {
+		return next(v.getErrors());
+	}
+
+	let query = {
+	};
+
+	try {
+		const count = await mongo.user.count(query);
+		const result = await mongo.user.find(query, {
+		}, {
+			limit: 10,
+			skip: 10 * input.skip,
+			sort: {
+				connected: 'desc',
+			},
+		}).select({
+			password: 0,
+		});
+
+		return res.json({
+			count,
+			result,
+		});
+	} catch (err) {
+		return next(err);
+	}
+}
+
+async function getAllUserInfo(req, res, next) {
+	debug('Enter getAllUserInfo method!');
+	try {
+		const result = await mongo.user.find({
+		}).select({
+			password: 0,
+		});
+		return res.json({
+			result,
+		});
+		
+	} catch (err) {
+		return next(err);
+	}
+}
+
 module.exports = {
 	show,
 	index,
@@ -202,4 +279,6 @@ module.exports = {
 	create,
 	update,
 	destroy,
+	userList,
+	getAllUserInfo,
 };

@@ -23,10 +23,10 @@ body {
     margin: 0;
     padding: 0;
     width: 100%;
-    min-width:940px;
+    min-width:1060px;
 }
 .el-container{
-  padding:0 5%
+  padding:0 2%
   }
 
 .el-main {

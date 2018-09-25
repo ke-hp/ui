@@ -1,5 +1,10 @@
 module.exports = (mongoose) => {
 	const Model = mongoose.model('mac', new mongoose.Schema({
+		agent:
+			{
+				type: mongoose.Schema.Types.ObjectId,
+				ref: 'user',
+			},
 		mac: {
 			type: String,
 			required: true,

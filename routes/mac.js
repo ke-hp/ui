@@ -43,35 +43,36 @@ async function index(req, res, next) {
 		return next(v.getErrors());
 	}
 
-	let query;
+	let query = {
+	};
+	if ("privileges" in res.locals.user && res.locals.user.privileges === "agent") {
+		query.agent = res.locals.user._id;
+	}
+
 	if (input.name) {
 		const reg = new RegExp(input.name, 'i');
-		query = {
-			$or: [
-				{
-					company: {
-						$regex: reg,
-					},
-				}, {
-					mac: {
-						$regex: reg,
-					},
+		query.$or = [
+			{
+				company: {
+					$regex: reg,
 				},
-			],
-		}
+			}, {
+				mac: {
+					$regex: reg,
+				},
+			},
+		];
 	} else {
-		query = {
-			$or: [
-				{
-					connected: false,
-					time: {
-						$gte: Date.now() - 60 * 60 * 24 * 30 * 1000,
-					},
-				}, {
-					connected: true,
+		query.$or = [
+			{
+				connected: false,
+				time: {
+					$gte: Date.now() - 60 * 60 * 24 * 30 * 1000,
 				},
-			],
-		}
+			}, {
+				connected: true,
+			},
+		];
 	}
 
 	try {
@@ -83,6 +84,8 @@ async function index(req, res, next) {
 			sort: {
 				connected: 'desc',
 			},
+		}).populate({
+			path: 'agent', select: 'name account privileges -_id',
 		});
 
 		return res.json({
@@ -152,10 +155,68 @@ async function show(req, res, next) {
 
 }
 
+async function acTypeProportion(req, res, next) {
+	debug('Enter acTypeProportion method!');
+
+	try {
+		const result = await mongo.mac.aggregate([
+			{
+				$match: {
+					type: {
+						$exists: true,
+					},
+				},
+			}, {
+				$group: {
+					_id: "$type",
+					num: {
+						$sum: 1,
+					},
+				},
+			},
+		]).sort({
+			num: -1,
+		});
+		return res.json({
+			result,
+		});
+	} catch (err) {
+		return next(err);
+	}
+
+}
+
+async function macBingAgent(req, res, next) {
+	debug('Enter macBingAgent method!');
+	try {
+		let result;
+		const macList = req.body;
+		await	macList.forEach(async (item) => {
+			result = await mongo.mac.findOneAndUpdate({
+				mac: item,
+			},
+			{
+				agent: req.params.id,
+			},
+			{
+				upsert: true,
+			}, );
+		});
+		return res.json({
+			result,
+		});
+	
+	} catch (err) {
+		return next(err);
+	}
+}
+
 module.exports = {
 	show,
 	index,
 	create,
 	update,
 	destroy,
+	macBingAgent,
+	acTypeProportion,
 }

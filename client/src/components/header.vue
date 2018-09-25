@@ -4,22 +4,22 @@
             <h1>NRadio</h1>
         </div>
         <el-menu mode="horizontal" @select="handleSelect">
-            <el-menu-item index="1">
+            <el-menu-item v-if="isAdmin" index="1">
                 <icon name="home"></icon>&nbsp;&nbsp;首页</el-menu-item>
             <el-submenu index="2">
                 <template slot="title">
                     <icon name="cog"></icon>&nbsp;&nbsp;设备管理</template>
                 <el-menu-item index="2-1">设备列表</el-menu-item>
-                <el-menu-item index="2-2">命令管理</el-menu-item>
-                <el-menu-item index="2-3">信息搜索</el-menu-item>
-                <el-menu-item index="2-4">设备分组</el-menu-item>
+                <el-menu-item v-if="isAdmin" index="2-2">命令管理</el-menu-item>
+                <el-menu-item v-if="isAdmin" index="2-3">信息搜索</el-menu-item>
+                <el-menu-item v-if="isAdmin" index="2-4">设备分组</el-menu-item>
             </el-submenu>
             <el-submenu index="3">
                 <template slot="title">
                     <icon name="user"></icon>&nbsp;&nbsp;账户管理</template>
-                <el-menu-item index="3-1">个人信息</el-menu-item>
-                <el-menu-item index="3-2">新增账户</el-menu-item>
-                <el-menu-item index="">版本:{{version}}</el-menu-item>
+                <el-menu-item index="3-1">修改密码</el-menu-item>
+		<el-menu-item v-if="isAdmin" index="3-2">新增账户</el-menu-item>
+                <el-menu-item v-if="isAdmin" index="3-3">账户管理</el-menu-item>
             </el-submenu>
             <el-menu-item index="4">
                 <icon name="power-off"></icon>&nbsp;&nbsp;退出</el-menu-item>
@@ -77,12 +77,16 @@ export default {
             },
             addUserVisible: false,
             loading: false,
-            formLabelWidth: "80px"
+            formLabelWidth: "80px",
+            isAdmin:false,
         };
     },
     mounted () {
         this.account = localStorage.getItem("account");
         this.user.name = this.account;
+        if ("admin" ===localStorage.getItem("privileges")) {
+            this.isAdmin = true;
+        }
     },
     methods: {
         async handleSelect (key) {
@@ -107,6 +111,9 @@ export default {
                     break;
                 case "3-2":
                     this.addUserVisible = true;
+                    break;
+                case "3-3":
+                   this.$router.push("/usersManage");
                     break;
                 case "4":
                     this.logout();

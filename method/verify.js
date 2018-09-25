@@ -26,6 +26,15 @@ module.exports = async function (req, res, next) {
 				return res.status(401).json();
 			}
 
+			if (user.privileges !== "admin") {
+				const noAccessUrl = [
+					"/ui/numstat", "/ui/chartdata", "/ui/proportion", "/ui/commands", "/ui/macGroups",
+				];
+				if (noAccessUrl.includes(req.baseUrl)) {
+					return res.status(401).json();
+				}
+			}
+
 			res.locals.user = user;
 			res.locals.session = session;
 			return next();

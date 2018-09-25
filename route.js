@@ -15,6 +15,8 @@ function route(app) {
 	app.use('/ui/*', verify);
 	app.delete('/ui/logout', userRoute.logout);
 	app.get('/ui/users', userRoute.index);
+	app.get('/ui/userList', userRoute.userList);
+	app.get('/ui/allUser', userRoute.getAllUserInfo);
 	app.post('/ui/users', userRoute.create);
 	app.get('/ui/users/:id([0-9,a-z]+)', userRoute.show);
 	app.put('/ui/users/:id([0-9,a-z]+)', userRoute.update);
@@ -24,6 +26,7 @@ function route(app) {
 	app.post('/ui/macs', macRoute.create);
 	app.get('/ui/macs/:id([0-9,a-z]+)', macRoute.show);
 	app.put('/ui/macs/:id([0-9,a-z]+)', macRoute.update);
+	app.put('/ui/macBingAgent/:id([0-9,a-z]+)', macRoute.macBingAgent);
 	app.delete('/ui/macs/:id([0-9,a-z]+)', macRoute.destroy);
 	// command
 	app.get('/ui/commands', commandRoute.index);
@@ -40,6 +43,7 @@ function route(app) {
 	// chart
 	app.get('/ui/numstat', numStatRoute.index);
 	app.get('/ui/chartdata', chartDataRoute.index);
+	app.get('/ui/proportion', macRoute.acTypeProportion);
 	// macGroups
 	app.get('/ui/macGroups', macGroupRoute.index);
 	app.post('/ui/macGroups', macGroupRoute.create);

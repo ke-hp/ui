@@ -24,15 +24,27 @@
                         </el-button>
                     </template>
                 </el-table-column>
+                <el-table-column prop="company" label="所属客户" sortable>
+                    <template slot-scope="scope">
+                        <span v-if= scope.row.agent>
+                            {{ scope.row.agent.name || scope.row.agent.account || ""}}
+                        </span>
+                        <el-button v-if="isAdmin" @click="settingAgent(scope.row)" type="text" size="small">
+                            <icon name="user"></icon>
+                        </el-button>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="mac" label="MAC地址" sortable>
                 </el-table-column>
-                <el-table-column prop="ver" label="设备版本" sortable>
+                <el-table-column prop="ver" label="版本" sortable>
+                </el-table-column>
+                <el-table-column prop="type" label="型号" sortable>
                 </el-table-column>
                 <el-table-column prop="ap" label="关联AP" sortable>
                 </el-table-column>
                 <el-table-column prop="sta" label="在线终端" sortable>
                 </el-table-column>
-                <el-table-column prop="connected" label="设备状态" sortable>
+                <el-table-column prop="connected" label="状态" sortable>
                     <template slot-scope="scope">
                         <span v-if= scope.row.connected style="color: #42b983">在线</span>
                         <span v-if= !scope.row.connected style="color: #e06c75">离线</span>
@@ -74,6 +86,21 @@
             <div slot="footer" class="dialog-footer">
                 <el-button @click="visible = false">取消</el-button>
                 <el-button type="primary" @click="onUpdate" :loading="loading">确认</el-button>
+            </div>
+        </el-dialog>
+        <el-dialog title="选择要关联的客户" :visible.sync="settingAgentVisible" center>
+            <el-form :model="form">
+                    <el-input v-model="form.mac" :disabled="true"></el-input>
+                <template>
+                    <br><br>
+                    <el-select v-model="value" placeholder="选择要关联的账号">
+                        <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" ></el-option>
+                    </el-select>
+                </template>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="visible = false">取消</el-button>
+                <el-button type="primary" @click="macBingAgent" :loading="loading">确认</el-button>
             </div>
         </el-dialog>
 
@@ -133,24 +160,56 @@ export default {
                 abbr: "",
                 command: ""
             },
+            settingAgentVisible: false,
             commandVisible: false,
             commandLoading: false,
             loading: false,
             formLabelWidth: "80px",
             showData: "",
-            commandList: []
+            commandList: [],
+            options: [],
+            value:"",
+            agent_id: "",
+            isAdmin:"",
         };
     },
     mounted () {
         this.initData();
+        if ("admin" ===localStorage.getItem("privileges")) {
+            this.isAdmin = true;
+        }
     },
     methods: {
         async initData () {
-            await this.getMacs();
+            await Promise.all(
+                [
+                    this.getMacs(),
+                    this.getAgentData()
+                ]
+            )
+        },
+        async getAgentData() {
+            try {
+                const res = await api.get("/ui/allUser",{});
+                const result = res.data.result;
+                result.forEach((item, index) => {
+                    this.options.push({value:item._id, label:`${item.account}  ${item.name||""}`})
+                })
+                
+            } catch (error) {
+                this.$notify.error({
+                    title: "错误",
+                    message: "获取数据失败！"
+                });
+            }
         },
         handleClick (val) {
             this.form = val;
             this.visible = true;
+        },
+        settingAgent(val) {
+            this.form = val;
+            this.settingAgentVisible = true;
         },
         async commandClick (val) {
             this.showData = "";
@@ -224,7 +283,6 @@ export default {
                 this.currentPage = 1;
                 const result = res.data.result;
 
-                // result.connected = result.connected.toString();
                 result.time =
                     Math.ceil(moment().diff(result.time, "hours")) + "h";
                 this.tableData = [result];
@@ -235,6 +293,31 @@ export default {
                     message: "创建失败！"
                 });
             }
+        },
+        async macBingAgent () {
+            try {
+                if (this.value) {
+                    const res = await api.put(
+                        `ui/macBingAgent/${this.value}`,
+                        [this.form.mac]
+                    );
+                    this.settingAgentVisible = false;
+                    this.visible = false;
+                    this.total = 1;
+                    this.currentPage = 1;
+                    const result = res.data.result;
+                    result.time =
+                        Math.ceil(moment().diff(result.time, "hours")) + "h";
+                    this.tableData = [result];
+                }
+            } catch (error) {
+                this.visible = false;
+                this.$notify.error({
+                    title: "错误",
+                    message: "创建失败！"
+                });
+            }
+
         },
         async getCommands (val) {
             try {

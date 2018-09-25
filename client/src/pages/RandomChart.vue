@@ -48,8 +48,8 @@
             </div>
 
             <div class="Chart" style="margin-left:1%;">
-                <h3>设备实时在线图</h3>
-                <pie-chart :pie-data="pieChartData" :height="300" v-if="pieLoaded"></pie-chart>
+                <h3>设备型号分布</h3>
+                <pie-chart :pie-data="pieChartData" :height="330" v-if="pieLoaded"></pie-chart>
             </div>
 
         </el-main>
@@ -177,6 +177,7 @@ export default {
 
         await this.getNumStartData();
         await this.getStaGrowthData();
+        await this.getProportion();
 
         await this.dataShow("sta");
         await this.dataShow("ac");
@@ -242,6 +243,17 @@ export default {
             } catch (error) {
                 console.log(error);
                 this[`${type}Loading`] = false;
+            }
+        },
+        async getProportion(type) {
+            try {
+                this[`${type}Loading`] = true;
+                let res = await api.get("ui/proportion")
+                let result = res.data.result;
+                this.pieChartData=result;
+                this.pieLoaded=true;
+            } catch (error) {
+                console.log(error);
             }
         },
         async getStaGrowtLineData(type) {

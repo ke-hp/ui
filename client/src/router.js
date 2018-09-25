@@ -9,6 +9,7 @@ import Search from '@/pages/Search'
 import RandomChart from '@/pages/RandomChart'
 import MacGroup from '@/pages/MacGroup'
 import MakeGroup from '@/pages/MakeGroup'
+import UsersManage from '@/pages/UsersManage'
 
 import 'vue-awesome/icons'
 import Icon from 'vue-awesome/components/Icon'
@@ -30,6 +31,13 @@ const routes = [{
 }, {
   path: '/home',
   component: Home,
+  meta: {
+    requiresAuth: true
+  }
+},
+{
+  path: '/usersManage',
+  component: UsersManage,
   meta: {
     requiresAuth: true
   }

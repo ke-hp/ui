@@ -4,6 +4,10 @@ module.exports = (mongoose) => {
 			type: String,
 			required: true,
 		},
+		privileges: {
+			type: String,
+			required: true,
+		},
 		jti: {
 			type: String,
 			required: true,

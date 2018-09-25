@@ -1,7 +1,6 @@
 import axios from 'axios'
 import router from './router'
 import qs from 'qs'
-axios.defaults.baseURL = 'http://localhost:3000'
 
 axios.interceptors.request.use(
   config => {

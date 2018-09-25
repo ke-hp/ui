@@ -66,7 +66,13 @@ export default {
                     localStorage.setItem("token", result.token);
                     localStorage.setItem("account", result.account);
                     localStorage.setItem("id", result.id);
-                    this.$router.push("/");
+                    localStorage.setItem("privileges", result.privileges || "");
+                    if (result.privileges !== "admin") {
+                        this.$router.push("/home");
+                    } else {
+                        this.$router.push("/");
+                    }
+                    
                 } catch (error) {
                     this.$router.push("/login");
                     this.$notify.error({
