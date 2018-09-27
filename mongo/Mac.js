@@ -1,11 +1,10 @@
 module.exports = (mongoose) => {
 	const Model = mongoose.model('mac', new mongoose.Schema({
-		agent:
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: 'user',
-				index: true,
-			},
+		agent: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'user',
+			index: true,
+		},
 		mac: {
 			type: String,
 			required: true,
@@ -20,7 +19,9 @@ module.exports = (mongoose) => {
 		},
 		time: {
 			type: Date,
-			default: Date.now(),
+		},
+		bindTime: {
+			type: Date,
 		},
 	}).index({
 		mac: 1, connected: 1,

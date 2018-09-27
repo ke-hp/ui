@@ -34,7 +34,7 @@ mongo.once('open', async function callback() {
 	console.log("Connected to DB!");
 
 	const adminUsers = await db.user.find({
-		privileges: "admin",
+		privileges: "superAdmin",
 	});
 	if (adminUsers.length > 0) {
 		return ;
@@ -44,9 +44,9 @@ mongo.once('open', async function callback() {
 	const cryptic = require(`${__base }method/cryptic`);
 	const password = cryptic.hmac('nradiowifi@com', 'nradiowifi@com');
 	await db.user.create({
-		account: 'nradio_admin',
+		account: 'nradio_superAdmin',
 		password: password,
-		privileges: "admin",
+		privileges: "superAdmin",
 	});
 });
 

@@ -76,6 +76,7 @@ async function create(req, res, next) {
 	debug('Enter create method!');
 
 	const rules = {
+		name: 'required|string',
 		account: 'required|string',
 		password: 'required|string|min:6',
 	};
@@ -98,6 +99,7 @@ async function create(req, res, next) {
 		const password = cryptic.hmac(input.password, input.password);
 
 		const result = await mongo.user.create({
+			name: input.name,
 			account: input.account,
 			password: password,
 		});
@@ -158,28 +160,30 @@ async function update(req, res, next) {
 	}
 	if ("password" in req.body) {
 		rules.password = 'string|required|min:6';
-		update.password = cryptic.hmac(input.password, input.password)
 	}
 	if ("privileges" in req.body) {
 		rules.privileges = 'string|required';
 		update.privileges = req.body.privileges;
 	}
-	if (Object.keys(update).length === 0 ) {
-		return next("update value is null");
-	}
 
 	const input = filter(req.body, rules);
+
+	if ("password" in req.body) {
+		update.password = cryptic.hmac(input.password, input.password)
+	}
+
 	const v = validator.make(input, rules);
 	if (v.fails()) {
 		return next(v.getErrors());
 	}
 
 	try {
-		const result = await mongo.user.findByIdAndUpdate(req.params.id, update, {
+		const result = await mongo.user.findOneAndUpdate({
+			_id: req.params.id,
+		}, update, {
 			new: true,
 		});
 		
-
 		return res.json({
 			result,
 		});
@@ -192,7 +196,20 @@ async function destroy(req, res, next) {
 	debug('Enter destroy method!');
 
 	try {
-		const result = await mongo.user.findByIdAndRemove(req.params.id);
+		Promise.all([
+			await mongo.user.findOneAndDelete({
+				_id: req.params.id,
+			}), await mongo.mac.update({
+				agent: req.params.id,
+			}, {
+				$unset: {
+					agent: "",
+					bindTime: "",
+				},
+			}, {
+				multi: true,
+			}),
+		])
 
 		return res.json({
 			status: true,

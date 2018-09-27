@@ -7,6 +7,10 @@
 
         <el-main>
 
+            <el-button @click="addUserClick()" type="primary" style="float:right;margin-bottom:10px;">
+                新增账户
+            </el-button>
+
             <el-table :data="tableData" stripe style="width: 100%" border>
                 <el-table-column prop="name" label="客户名称" sortable>
                     <template slot-scope="scope">
@@ -20,7 +24,7 @@
                 </el-table-column>
                 <el-table-column prop="privileges" label="权限" sortable>
                     <template slot-scope="scope">
-                        {{ scope.row.privileges=="admin"?"管理员":"代理商" || ""}}
+                        {{ scope.row.privileges=="admin"?"管理员":scope.row.privileges=="agent"?"代理商":scope.row.privileges=="superAdmin"?"超级管理员":""}}
                         <el-button  @click="updateUsergPrivilegesClick(scope.row)" type="text" size="small">
                             <icon name="wrench"></icon>
                         </el-button>
@@ -30,6 +34,12 @@
                     <template slot-scope="scope">
                         <el-button @click="agentBingMacClick(scope.row)" type="button" size="small">
                             批量关联设备
+                        </el-button>
+                        <el-button @click="delUserClick(scope.row)" type="button" size="small">
+                            删除账号
+                        </el-button>
+                        <el-button @click="catMac(scope.row)" type="button" size="small">
+                            已关联设备
                         </el-button>
                     </template>
                 </el-table-column>
@@ -43,6 +53,24 @@
         <el-footer>
             <homeFooter/>
         </el-footer>
+
+        <el-dialog title="新增账户" :visible.sync="addUserVisible" center>
+            <el-form :model="addUser">
+                <el-form-item label="账号名称" :label-width="formLabelWidth">
+                    <el-input v-model="addUser.name"></el-input>
+                </el-form-item>
+                <el-form-item label="账号" :label-width="formLabelWidth">
+                    <el-input v-model="addUser.account"></el-input>
+                </el-form-item>
+                <el-form-item label="密码" :label-width="formLabelWidth">
+                    <el-input v-model="addUser.password" type="password" :disabled="true"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="addUserVisible = false">取消</el-button>
+                <el-button type="primary" @click="onAddUser" :loading="loading">确认</el-button>
+            </div>
+        </el-dialog>
 
         <el-dialog title="修改名称" :visible.sync="updateUserNameVisible" center>
             <el-form :model="form">
@@ -72,6 +100,18 @@
             <div slot="footer" class="dialog-footer">
                 <el-button @click="updateUserPrivilegesVisible = false">取消</el-button>
                 <el-button type="primary" @click="updateUserPrivileges" :loading="loading">确认</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="删除账号" :visible.sync="delUserVisible" center>
+            <el-form :model="agent">
+                <el-form-item label="账户" :label-width="formLabelWidth">
+                    <el-input v-model="agent.account" :disabled="true"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="delUserVisible = false">取消</el-button>
+                <el-button type="primary" @click="delUser" :loading="loading">确认</el-button>
             </div>
         </el-dialog>
 
@@ -106,6 +146,11 @@ export default {
     },
     data () {
         return {
+            addUser: {
+                name: "",
+                account:"",
+                password: "!Z@X3c4v"
+            },
             search: {
                 name: "",
                 skip: 0
@@ -125,12 +170,17 @@ export default {
             },
             macBingAgentVisible: false,
             updateUserPrivilegesVisible: false,
+            addUserVisible: false,
+            delUserVisible: false,
             options: [{
                 value: "agent",
                 label: "代理商",
             },{
                 value: "admin",
                 label: "管理员",
+            },{
+                value: "superAdmin",
+                label: "超级管理员",
             }],
             value:"",
             loading: false,
@@ -145,6 +195,46 @@ export default {
         async initData () {
             await this.getUsers();
         },
+        addUserClick(){
+            this.addUserVisible = true;
+        },
+        async onAddUser () {
+            try {
+                if ( !(/[0-9,a-z,A-Z]+/.test(this.addUser.account)) || (this.addUser.account.length < 4) || (this.addUser.name.length <= 0) ) {
+                    throw {
+                        ercode: 98,
+                        message: "非法输入,账号名称不为空,账号由数组字母组成且长度不小于4"
+                    };
+                }
+                const res = await api.post("ui/users", {
+                    name: this.addUser.name,
+                    account: this.addUser.account,
+                    password: this.addUser.password,
+                });
+
+                this.total = 1;
+                this.currentPage = 1;
+                const result = res.data.result;
+                this.tableData = [result];
+                this.addUserVisible = false;
+                this.$notify({
+                    title: "成功",
+                    message: "账号创建成功！",
+                    type: "success"
+                });
+            } catch (error) {
+                console.log(error);
+                let message = "账号创建失败!";
+                if (error.message === "user already exist") {
+                    error.message = "用戶已存在";
+                }
+                this.userVisible = false;
+                this.$notify.error({
+                    title: "错误",
+                    message:  error.message || message,
+                });
+            }
+        },
         updateUserNameClick (val) {
             this.form = val;
             this.updateUserNameVisible = true;
@@ -157,6 +247,32 @@ export default {
             this.showData = "";
             this.agent = val;
             this.macBingAgentVisible = true;
+        },
+        delUserClick (val) {
+            this.agent = val;
+            this.delUserVisible = true;
+        },
+        catMac (val) {
+            this.agent = val;
+            console.log(val._id);
+            let newWin = window.open();
+            newWin.location.href = `#/home?agent=${val._id}`;
+        },
+        async delUser () {
+            try {
+                if (this.agent._id) {
+                const res = await api.delete(`ui/users/${this.agent._id}`);
+                this.delUserVisible = false;
+                this.getUsers();
+                }
+            } catch (error) {
+                this.delUserVisible = false;
+                this.$notify.error({
+                    title: "错误",
+                    message: "删除失败！"
+                });
+            }
+
         },
         async handleCurrentChange (val) {
             await this.getUsers(val);
@@ -200,16 +316,9 @@ export default {
                         privileges: this.value,
                     }
                 );
-
                 this.updateUserPrivilegesVisible = false;
-                this.total = 1;
-                this.currentPage = 1;
-                const result = res.data.result;
-
-                result.time =
-                    Math.ceil(moment().diff(result.time, "hours")) + "h";
-                this.tableData = [result];
-                    
+                this.getUsers()
+    
                 }
             } catch (error) {
                 this.updateUserPrivilegesVisible = false;
@@ -237,7 +346,13 @@ export default {
                         }
                     })
                     const res = await api.put(`ui/macBingAgent/${this.agent._id}`,macList);
-                    this.updateUserNameVisible = false;
+                    this.macBingAgentVisible = false;
+                    this.$notify({
+                    title: "成功",
+                    message: "设备绑定成功！",
+                    type: "success"
+                });
+
                 }
             } catch (err) {
                 if (err.code === 98) {

@@ -23,6 +23,7 @@ async function index(req, res, next) {
 
 	try {
 		const count = await mongo.command.count({
+			user: res.locals.user._id,
 			$or: [
 				{
 					abbr: {
@@ -36,6 +37,7 @@ async function index(req, res, next) {
 			],
 		});
 		const result = await mongo.command.find({
+			user: res.locals.user._id,
 			$or: [
 				{
 					abbr: {
@@ -80,6 +82,8 @@ async function create(req, res, next) {
 	}
 
 	try {
+		
+		input.user = res.locals.user._id;
 		const result = await mongo.command.create(input);
 
 		return res.json({

@@ -67,7 +67,7 @@ export default {
                     localStorage.setItem("account", result.account);
                     localStorage.setItem("id", result.id);
                     localStorage.setItem("privileges", result.privileges || "");
-                    if (result.privileges !== "admin") {
+                    if (result.privileges === "agent") {
                         this.$router.push("/home");
                     } else {
                         this.$router.push("/");

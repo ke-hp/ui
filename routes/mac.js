@@ -36,6 +36,7 @@ async function index(req, res, next) {
 	const rules = {
 		name: 'string',
 		skip: 'integer',
+		agent: 'string',
 	};
 	const input = filter(req.query, rules);
 	const v = validator.make(input, rules);
@@ -47,6 +48,10 @@ async function index(req, res, next) {
 	};
 	if ("privileges" in res.locals.user && res.locals.user.privileges === "agent") {
 		query.agent = res.locals.user._id;
+	}
+
+	if (input.agent) {
+		query.agent = input.agent;
 	}
 
 	if (input.name) {
@@ -186,26 +191,34 @@ async function acTypeProportion(req, res, next) {
 
 }
 
-async function macBingAgent(req, res, next) {
+function macBingAgent(req, res, next) {
 	debug('Enter macBingAgent method!');
 	try {
-		let result;
 		const macList = req.body;
-		await	macList.forEach(async (item) => {
-			result = await mongo.mac.findOneAndUpdate({
+		let counter = 0;
+		let result = [];
+		macList.forEach(async (item) => {
+			const tiemResult = await mongo.mac.findOneAndUpdate({
 				mac: item,
 			},
 			{
 				agent: req.params.id,
+				bindTime: Date.now(),
 			},
 			{
 				upsert: true,
-			}, );
-		});
-		return res.json({
-			result,
-		});
-	
+			});
+			result.push(tiemResult);
+			counter++;
+			
+		  if (counter === macList.length){
+				return await res.json({
+					result,
+				});
+			}
+			
+		})
+
 	} catch (err) {
 		return next(err);
 	}

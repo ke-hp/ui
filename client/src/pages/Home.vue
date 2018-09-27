@@ -7,6 +7,11 @@
 
         <el-main>
             <el-form :inline="true" :model="search">
+                <el-form-item v-if="isAdmin" :model="form">
+                    <el-select clearable  v-model="search.agent" placeholder="所属客户">
+                        <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" ></el-option>
+                    </el-select>
+                </el-form-item>
                 <el-form-item>
                     <el-input placeholder="请输入内容" v-model="search.name" clearable @keydown.enter.native="onSubmit"></el-input>
                 </el-form-item>
@@ -16,7 +21,7 @@
             </el-form>
 
             <el-table :data="tableData" stripe style="width: 100%" border>
-                <el-table-column prop="company" label="用户" sortable>
+                <el-table-column prop="company" label="备注" sortable>
                     <template slot-scope="scope">
                         {{ scope.row.company }}
                         <el-button @click="handleClick(scope.row)" type="text" size="small">
@@ -24,12 +29,12 @@
                         </el-button>
                     </template>
                 </el-table-column>
-                <el-table-column prop="company" label="所属客户" sortable>
+                <el-table-column v-if="isAdmin" prop="company" label="所属客户" sortable>
                     <template slot-scope="scope">
                         <span v-if= scope.row.agent>
-                            {{ scope.row.agent.name || scope.row.agent.account || ""}}
+                            {{ scope.row.agent.name || ""}}
                         </span>
-                        <el-button v-if="isAdmin" @click="settingAgent(scope.row)" type="text" size="small">
+                        <el-button @click="settingAgent(scope.row)" type="text" size="small">
                             <icon name="user"></icon>
                         </el-button>
                     </template>
@@ -77,7 +82,7 @@
         <el-dialog title="设备信息" :visible.sync="visible" center>
             <el-form :model="form">
                 <el-form-item label="MAC" :label-width="formLabelWidth">
-                    <el-input v-model="form.mac" :disabled="true"></el-input>
+                <el-input v-model="form.mac" :disabled="true"></el-input>
                 </el-form-item>
                 <el-form-item label="用户" :label-width="formLabelWidth">
                     <el-input v-model="form.company"></el-input>
@@ -90,7 +95,7 @@
         </el-dialog>
         <el-dialog title="选择要关联的客户" :visible.sync="settingAgentVisible" center>
             <el-form :model="form">
-                    <el-input v-model="form.mac" :disabled="true"></el-input>
+                <el-input v-model="form.mac" :disabled="true"></el-input>
                 <template>
                     <br><br>
                     <el-select v-model="value" placeholder="选择要关联的账号">
@@ -145,20 +150,21 @@ export default {
         return {
             search: {
                 name: "",
-                skip: 0
+                skip: 0,
+                agent: "",
             },
             tableData: [],
             total: 0,
             currentPage: 1,
             form: {
                 mac: "",
-                company: ""
+                company: "",
             },
             visible: false,
             command: {
                 mac: "",
                 abbr: "",
-                command: ""
+                command: "",
             },
             settingAgentVisible: false,
             commandVisible: false,
@@ -168,14 +174,19 @@ export default {
             showData: "",
             commandList: [],
             options: [],
-            value:"",
+            value: "",
             agent_id: "",
-            isAdmin:"",
+            isAdmin: false,
+            isSuperAdmin: false,
         };
     },
     mounted () {
         this.initData();
         if ("admin" ===localStorage.getItem("privileges")) {
+            this.isAdmin = true;
+        }
+        if ("superAdmin" ===localStorage.getItem("privileges")) {
+            this.isSuperAdmin = true;
             this.isAdmin = true;
         }
     },
@@ -193,7 +204,7 @@ export default {
                 const res = await api.get("/ui/allUser",{});
                 const result = res.data.result;
                 result.forEach((item, index) => {
-                    this.options.push({value:item._id, label:`${item.account}  ${item.name||""}`})
+                    this.options.push({value:item._id, label:`${item.name||""}`})
                 })
                 
             } catch (error) {
@@ -305,7 +316,7 @@ export default {
                     this.visible = false;
                     this.total = 1;
                     this.currentPage = 1;
-                    const result = res.data.result;
+                    const result = res.data.result[0];
                     result.time =
                         Math.ceil(moment().diff(result.time, "hours")) + "h";
                     this.tableData = [result];
@@ -359,6 +370,10 @@ export default {
             this.commandLoading = false;
         },
         async getMacs (skip) {
+            if ("agent" in this.$route.query) {
+                this.search.agent = this.$route.query.agent;
+            }
+            
             this.search.skip = skip ? skip - 1 : 0;
             try {
                 const res = await api.get("ui/macs", {
