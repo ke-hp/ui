@@ -6,7 +6,7 @@
         </el-header>
 
         <el-main>
-            <h1 style="font-family:Helvetica Microsoft YaHei; font-size:24px;">鲲鹏无限科技正在为全国 <span style="color:#F56C6C;font-size:26px;">{{ sta }}</span> 位用户提供优质的WI-FI服务</h1>
+            <h1 style="font-family:Helvetica Microsoft YaHei; font-size:24px;">鲲鹏无限科技正在为全国 <span style="color:#F56C6C;font-size:26px;">{{ sta || "" }}</span> 位用户提供优质的WI-FI服务</h1>
             <div class="Chart" style="width:100%">
                 <h3 style="text-align:center; padding-left:0; ">在线用户</h3>
                 <div class="block">
@@ -18,7 +18,7 @@
             </div>
 
             <div class="Chart">
-                <h3><span>在线路由</span><span style="float:right; padding-right:6%; color:#67C23A">{{ ac }}</span></h3>
+                <h3><span>在线路由</span><span style="float:right; padding-right:6%; color:#67C23A">{{ ac || "" }}</span></h3>
                 <div class="block">
                     <el-date-picker v-model="acTimeValue" size="mini" type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" align="center" :picker-options="pickerOptions2" unlink-panels>
                     </el-date-picker>
@@ -28,7 +28,7 @@
             </div>
 
             <div class="Chart" style="margin-left:1%;">
-                <h3><span>在线AP</span><span style="float:right; padding-right:6%; color:#67C23A">{{ ap }}</span></h3>
+                <h3><span>在线AP</span><span style="float:right; padding-right:6%; color:#67C23A">{{ ap || "" }}</span></h3>
                 <div class="block">
                     <el-date-picker v-model="apTimeValue" size="mini" type="datetimerange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" align="center" :picker-options="pickerOptions2" unlink-panels>
                     </el-date-picker>
@@ -198,9 +198,11 @@ export default {
                     }
                 });
 
-                this.sta = res.data.result[0].sta;
-                this.ac = res.data.result[0].ac;
-                this.ap = res.data.result[0].ap;
+                if (res.data.result.length > 0) {
+                    this.sta = res.data.result[0].sta;
+                    this.ac = res.data.result[0].ac;
+                    this.ap = res.data.result[0].ap;
+                }
 
                 let result = res.data.result.reverse();
                 this.staLineStoreData = result;
