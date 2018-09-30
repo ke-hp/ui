@@ -34,7 +34,7 @@ export default {
       }
       if(type==="num"){
         result = result.splice(10,2);
-        resultpush(sumArr(result)-sumArr(result.slice(0,10)))
+        result.push(sumArr(result)-sumArr(result.slice(0,10)))
         return result;
       }
       function sumArr(arr){
